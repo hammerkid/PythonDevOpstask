@@ -108,7 +108,7 @@
         state: restarted
 
 
-- hosts: app1
+- hosts: app
   become_user: root
   remote_user: ubuntu
   become: true
