@@ -1,0 +1,23 @@
+<html>
+    <head>
+        <title>Fill the forms</title>
+        <link rel=stylesheet type=text/css href="{{ url_for('static', filename='style.css') }}">
+    </head>
+    <body>
+        <div id="container">
+            <div class="title">
+                <h1>Fill the forms</h1>
+            </div>
+            <div id="content">
+                <form method="post" action="{{ url_for('hello') }}">
+                  <label for="name">Please enter name:</label>
+                  <input type="text" name="name" /><br />
+                  <label for="value">Please enter value:</label>
+                  <input type="text" name="value" /><br />
+                  <label for="date">Please enter date:</label>
+                  <input type="text" name="date" /><br />
+                  <input type="submit" />
+                </form>
+        </div>
+    </body>
+</html>
