@@ -73,6 +73,7 @@
 
 
   tasks:
+
     - name: Run apt-get update
       apt:
          update_cache: yes
@@ -106,12 +107,8 @@
         name: nginx
         state: restarted
 
-###############################################
 
-ql
-
-
-- hosts: app2
+- hosts: app1
   become_user: root
   remote_user: ubuntu
   become: true
@@ -128,32 +125,34 @@ ql
            - build-essential
            - python-dev
            - python-mysqldb
+           - python-pip
+           - libpcre3
+           - libpcre3-dev
+
+
+    - name: run pip upgrade
+      command: export LC_ALL=C
+      command: pip install --upgrade pip
 
     - name: Install uwsgi
       pip:
          name: uwsgi
          extra_args: -I --no-cache-dir
 
+    - name: Install flask
+      pip:
+         name: flask
+         extra_args: -I --no-cache-dir
+
     - name: Copy app from git
       git:
          repo: 'https://github.com/hammerkid/PythonDevOpstask.git'
          dest: /home/ubuntu/app/
-         version: app
+         version: flaskapp
+      ignore_errors: yes
 
     - name: Run uwsgi socket 
-      command: uwsgi --socket :8000 --protocol=http -w wsgi
-         chdir: /home/ubuntu/app
-
-#    - name: Create dev-ops-app.service
-#      command: cp /home/ubuntu/app/flaskapp/dev-ops-app.service /etc/systemd/system/
-      
-#    - name: Start dev-ops-app service
-#      systemd: name=dev-ops-app state=starte
-
-#    - name: Create dev-ops-app.service
-#      command: systemctl daemon-reload
-
-
-
-
+      shell: nohup uwsgi --socket :8000 --protocol=http -w wsgi </dev/null >/dev/null 2>&1 &
+      args:
+          chdir: /home/ubuntu/app
 
