@@ -1,6 +1,7 @@
 import MySQLdb
 
 def connection():
+"""connector to mysql  db"""
     conn = MySQLdb.connect(host="192.168.33.13",
                            user = "user",
                            passwd = "password",
