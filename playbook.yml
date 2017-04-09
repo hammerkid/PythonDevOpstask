@@ -1,16 +1,3 @@
-- hosts: loadbalancer
-  become_user: root
-  remote_user: ubuntu
-  become: true
-
-
-  tasks:
-    - name: Install the package "nginx"
-      apt:
-        name: nginx #for pip add locale command export LC_ALL=C
-        state: present
-
-
 - hosts: db
   become_user: root
   remote_user: ubuntu
@@ -23,16 +10,14 @@
         url: https://repo.percona.com/apt/percona-release_0.1-4.xenial_all.deb
         dest: /home/ubuntu/
 
-
     - name: Run dpkg 
-      dpkg_selections:
-        name: percona-release_0.1-4.xenial_all.deb
-        selection: install
+      command: dpkg -i percona-release_0.1-4.xenial_all.deb
+      args:
+        chdir: /home/ubuntu/
     
     - name: Run apt-get update
       apt:
          update_cache: yes
-
 
     - name: Install Percona package
       apt:
@@ -69,17 +54,61 @@
         name: test
         state: present
 
+    - git:
+        repo: 'https://github.com/hammerkid/PythonDevOpstask.git'
+        dest: /home/ubuntu/db/
+        version: db
 
-    - name: Copy database template file
-      copy:
-        src: sql_template.sql
-        dest: /tmp
-    
     - name: Create database
       mysql_db:
         name: test
         state: import
-        target: /tmp/sql_template.sql
+        target: /home/ubuntu/db/sql_template.sql
+
+
+- hosts: loadbalancer
+  become_user: root
+  remote_user: ubuntu
+  become: true
+
+
+  tasks:
+    - name: Run apt-get update
+      apt:
+         update_cache: yes
+
+    - name: Install the package "nginx"
+      apt:
+        name: nginx 
+        state: present
+
+    - name: Prepare nginx configs
+      git:
+        repo: 'https://github.com/hammerkid/PythonDevOpstask.git'
+        dest: /home/ubuntu/configs/
+        version: configs
+
+    - name: Move config to conf.d
+      command: mv /home/ubuntu/configs/dev-ops-app.conf /etc/nginx/conf.d/
+
+    - name: Create soft link to sites enabled
+      command: ln -s /etc/nginx/conf.d/dev-ops-app.conf  /etc/nginx/sites-enabled/
+    
+    - name: Move config to conf.d
+      command: mv /home/ubuntu/configs/nginx.conf /etc/nginx/
+    
+    - name: Delete dafault soft link
+      command: rm /etc/nginx/sites-enabled/default
+      ignore_errors: yes
+
+    - name: Restart nginx
+      service:
+        name: nginx
+        state: restarted
+
+###############################################
+
+ql
 
 
 - hosts: app2
@@ -107,15 +136,13 @@
 
     - name: Copy app from git
       git:
-         repo: 'https://github.com/hammerkid/dev_ops_test.git'
-         dest: /home/ubuntu/app
+         repo: 'https://github.com/hammerkid/PythonDevOpstask.git'
+         dest: /home/ubuntu/app/
          version: app
 
-
-#    - name: Run uwsgi socket #check how to runs ot 2 servs same time
-#      command: uwsgi --socket :8000 --protocol=http -w wsgi
-#         chdir: /home/ubuntu/app/flaskapp
-
+    - name: Run uwsgi socket 
+      command: uwsgi --socket :8000 --protocol=http -w wsgi
+         chdir: /home/ubuntu/app
 
 #    - name: Create dev-ops-app.service
 #      command: cp /home/ubuntu/app/flaskapp/dev-ops-app.service /etc/systemd/system/
