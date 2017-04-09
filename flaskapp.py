@@ -1,13 +1,16 @@
 from flask import Flask, render_template, request, url_for, json, Response
 from db import connection
+from werkzeug.contrib.fixers import ProxyFix
 
-app = Flask(__name__)
+application = Flask(__name__)
 
-@app.route('/')
+application.wsgi_app = ProxyFix(application.wsgi_app)
+
+@application.route('/')
 def form():
     return render_template('form_submit.html')
 
-@app.route('/post/', methods=['POST'])
+@application.route('/post/', methods=['POST'])
 def hello():
     if request.headers['Content-Type'] == 'application/json':
         data_responce = {'ok':Response().status, 'error':{'code':Response().status_code, 'message':'POST data accepted'} }
@@ -33,7 +36,7 @@ def hello():
 
 # Run the app :)
 if __name__ == '__main__':
-  app.run( 
-        host="0.0.0.0",
-  )
+  application.run(
+        host="0.0.0.0")
+
 
